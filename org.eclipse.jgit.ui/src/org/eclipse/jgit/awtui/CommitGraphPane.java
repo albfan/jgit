@@ -43,27 +43,16 @@
 
 package org.eclipse.jgit.awtui;
 
-import java.awt.BasicStroke;
-import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Stroke;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
-
 import org.eclipse.jgit.awtui.SwingCommitList.SwingLane;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revplot.PlotCommit;
 import org.eclipse.jgit.revplot.PlotCommitList;
+
+import javax.swing.*;
+import javax.swing.table.*;
+import java.awt.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 /**
  * Draws a commit graph in a JTable.
@@ -87,7 +76,8 @@ public class CommitGraphPane extends JTable {
 		configureHeader();
 		setShowHorizontalLines(false);
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		configureRowHeight();
+        setRowMargin(0);
+        configureRowHeight();
 	}
 
 	private void configureRowHeight() {
@@ -97,7 +87,7 @@ public class CommitGraphPane extends JTable {
 			Component c = renderer.getTableCellRendererComponent(this, "ÅOj", false, false, 0, i);
 			h = Math.max(h, c.getPreferredSize().height);
 		}
-		setRowHeight(h + getRowMargin());
+		setRowHeight(h +getRowMargin());
 	}
 
 	/**
