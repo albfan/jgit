@@ -49,40 +49,45 @@ import java.util.LinkedList;
 import org.eclipse.jgit.revplot.PlotCommitList;
 import org.eclipse.jgit.revplot.PlotLane;
 
+import java.awt.*;
+import java.util.LinkedList;
+
 class SwingCommitList extends PlotCommitList<SwingCommitList.SwingLane> {
-	final LinkedList<Color> colors;
+    final LinkedList<Color> colors;
 
-	SwingCommitList() {
-		colors = new LinkedList<Color>();
-		repackColors();
-	}
+    SwingCommitList() {
+        colors = new LinkedList<Color>();
+        repackColors();
+    }
 
-	private void repackColors() {
-		colors.add(Color.green);
-		colors.add(Color.blue);
-		colors.add(Color.red);
-		colors.add(Color.magenta);
-		colors.add(Color.darkGray);
-		colors.add(Color.yellow.darker());
-		colors.add(Color.orange);
-	}
+    private void repackColors() {
+        colors.add(new Color(255, 128, 0));
+        colors.add(new Color(0, 102, 204));
+        colors.add(new Color(0, 130, 130));
+        colors.add(new Color(255, 45, 45));
+        colors.add(new Color(64, 64, 255));
+        colors.add(new Color(128, 64, 0));
+        colors.add(new Color(255, 0, 255));
+        colors.add(new Color(128, 0, 255));
+    }
 
-	@Override
-	protected SwingLane createLane() {
-		final SwingLane lane = new SwingLane();
-		if (colors.isEmpty())
-			repackColors();
-		lane.color = colors.removeFirst();
-		return lane;
-	}
+    @Override
+    protected SwingLane createLane() {
+        final SwingLane lane = new SwingLane();
+        if (colors.isEmpty())
+            repackColors();
+        lane.color = colors.removeFirst();
+        return lane;
+    }
 
-	@Override
-	protected void recycleLane(final SwingLane lane) {
-		colors.add(lane.color);
-	}
+    @Override
+    protected void recycleLane(final SwingLane lane) {
+        colors.add(lane.color);
+    }
 
-	static class SwingLane extends PlotLane {
-		Color color;
+    static class SwingLane extends PlotLane {
+        Color color;
+
 		@Override
 		public boolean equals(Object o) {
 			return super.equals(o) && color.equals(((SwingLane)o).color);

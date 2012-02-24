@@ -145,7 +145,7 @@ public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 		if (commit.has(RevFlag.UNINTERESTING))
 			drawBoundaryDot(dotX, dotY, dotSize, dotSize);
 		else
-			drawCommitDot(dotX, dotY, dotSize, dotSize);
+			drawCommitDot(laneColor(commit.getLane()), dotX, dotY, dotSize, dotSize);
 
 		int textx = Math.max(maxCenter + LANE_WIDTH / 2, dotX + dotSize) + 8;
 		int n = commit.refs.length;
@@ -217,16 +217,18 @@ public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 	 * Usually the commit dot is a filled oval in blue, then a drawn oval in
 	 * black, using the same coordinates for both operations.
 	 *
-	 * @param x
-	 *            upper left of the oval's bounding box.
-	 * @param y
-	 *            upper left of the oval's bounding box.
-	 * @param w
-	 *            width of the oval's bounding box.
-	 * @param h
+     * @param color
+     *            color for dot
+     * @param x
+     *            upper left of the oval's bounding box.
+     * @param y
+*            upper left of the oval's bounding box.
+     * @param w
+*            width of the oval's bounding box.
+     * @param h
 	 *            height of the oval's bounding box.
-	 */
-	protected abstract void drawCommitDot(int x, int y, int w, int h);
+     */
+	protected abstract void drawCommitDot(TColor color, int x, int y, int w, int h);
 
 	/**
 	 * Draw a single boundary commit (aka uninteresting commit) dot.

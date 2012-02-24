@@ -58,6 +58,10 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revplot.AbstractPlotRenderer;
 import org.eclipse.jgit.revplot.PlotCommit;
 
+import java.awt.*;
+import java.util.HashMap;
+
+final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color> {
 final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color>
 		implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -72,6 +76,9 @@ final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color>
 
 	void paint(final Graphics in, final PlotCommit<SwingLane> commit) {
 		g = (Graphics2D) in.create();
+        HashMap map = new HashMap();
+        map.put(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHints(map);
 		try {
 			final int h = cell.getHeight();
 			g.setColor(cell.getBackground());
@@ -101,12 +108,13 @@ final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color>
 	}
 
 	@Override
-	protected void drawCommitDot(final int x, final int y, final int w,
-			final int h) {
-		g.setColor(Color.blue);
+	protected void drawCommitDot(Color color, final int x, final int y, final int w,
+                                 final int h) {
+
+		g.setColor(color);
 		g.setStroke(CommitGraphPane.strokeCache[1]);
 		g.fillOval(x, y, w, h);
-		g.setColor(Color.black);
+		g.setColor(color);
 		g.drawOval(x, y, w, h);
 	}
 
