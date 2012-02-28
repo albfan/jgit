@@ -1,0 +1,2 @@
+java -Dfile.encoding=UTF8 -classpath org.eclipse.jgit.pgm/target/classes:$HOME/.m2/repository/args4j/args4j/2.0.12/args4j-2.0.12.jar:$HOME/projects/java/jgit/org.eclipse.jgit/target/classes:$HOME/.m2/repository/com/jcraft/jsch/0.1.44-1/jsch-0.1.44-1.jar:$HOME/projects/java/jgit/org.eclipse.jgit.iplog/target/classes:$HOME/projects/java/jgit/org.eclipse.jgit.ui/target/classes:$HOME/projects/java/jgit/org.eclipse.jgit.console/target/classes:$HOME/bin/idea-IC-111.167/lib/idea_rt.jar org.eclipse.jgit.pgm.Main $@
+
