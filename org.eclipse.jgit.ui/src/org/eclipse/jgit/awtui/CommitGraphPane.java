@@ -69,10 +69,12 @@ public class CommitGraphPane extends JTable {
 	private static final long serialVersionUID = 1L;
 
 	private final SwingCommitList allCommits;
+    private boolean decorate;
 
-	/** Create a new empty panel. */
+
+    /** Create a new empty panel. */
 	public CommitGraphPane() {
-		allCommits = new SwingCommitList();
+        allCommits = new SwingCommitList();
 		configureHeader();
 		setShowHorizontalLines(false);
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -80,7 +82,12 @@ public class CommitGraphPane extends JTable {
         configureRowHeight();
 	}
 
-	private void configureRowHeight() {
+    public void setDecorate(boolean decorate) {
+        this.decorate = decorate;
+        configureHeader();
+    }
+
+    private void configureRowHeight() {
 		int h = 0;
 		for (int i = 0; i<getColumnCount(); ++i) {
 			TableCellRenderer renderer = getDefaultRenderer(getColumnClass(i));
@@ -123,7 +130,9 @@ public class CommitGraphPane extends JTable {
 		author.setHeaderValue(UIText.get().author);
 		date.setHeaderValue(UIText.get().date);
 
-		graph.setCellRenderer(new GraphCellRender());
+        GraphCellRender cellRenderer = new GraphCellRender();
+        cellRenderer.getRenderer().setDecorate(decorate);
+        graph.setCellRenderer(cellRenderer);
 		author.setCellRenderer(new NameCellRender());
 		date.setCellRenderer(new DateCellRender());
 	}
@@ -222,7 +231,11 @@ public class CommitGraphPane extends JTable {
 			return this;
 		}
 
-		@Override
+        public AWTPlotRenderer getRenderer() {
+            return renderer;
+        }
+
+        @Override
 		protected void paintComponent(final Graphics inputGraphics) {
 			if (inputGraphics == null)
 				return;

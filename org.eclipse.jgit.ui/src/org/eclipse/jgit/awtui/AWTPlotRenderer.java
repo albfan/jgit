@@ -55,24 +55,24 @@ import org.eclipse.jgit.awtui.CommitGraphPane.GraphCellRender;
 import org.eclipse.jgit.awtui.SwingCommitList.SwingLane;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revplot.AbstractPlotRenderer;
 import org.eclipse.jgit.revplot.PlotCommit;
+import org.eclipse.jgit.revwalk.RevCommit;
 
 import java.awt.*;
 import java.util.HashMap;
 
-final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color> {
-final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color>
-		implements Serializable {
+final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color> implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	final GraphCellRender cell;
 
-	transient Graphics2D g;
+    transient Graphics2D g;
 
 	AWTPlotRenderer(final GraphCellRender c) {
 		cell = c;
-	}
+    }
 
 	void paint(final Graphics in, final PlotCommit<SwingLane> commit) {
 		g = (Graphics2D) in.create();
@@ -159,35 +159,36 @@ final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color>
 	protected int drawLabel(int x, int y, Ref ref) {
 		String txt;
 		String name = ref.getName();
-		if (name.startsWith(Constants.R_HEADS)) {
-			g.setBackground(Color.GREEN);
-			txt = name.substring(Constants.R_HEADS.length());
-		} else if (name.startsWith(Constants.R_REMOTES)){
-			g.setBackground(Color.LIGHT_GRAY);
-			txt = name.substring(Constants.R_REMOTES.length());
-		} else if (name.startsWith(Constants.R_TAGS)){
-			g.setBackground(Color.YELLOW);
-			txt = name.substring(Constants.R_TAGS.length());
-		} else {
-			// Whatever this would be
-			g.setBackground(Color.WHITE);
-			if (name.startsWith(Constants.R_REFS))
-				txt = name.substring(Constants.R_REFS.length());
-			else
-				txt = name; // HEAD and such
-		}
-		if (ref.getPeeledObjectId() != null) {
-			float[] colorComponents = g.getBackground().getRGBColorComponents(null);
-			colorComponents[0] *= 0.9;
-			colorComponents[1] *= 0.9;
-			colorComponents[2] *= 0.9;
-			g.setBackground(new Color(colorComponents[0],colorComponents[1],colorComponents[2]));
-		}
-		if (txt.length() > 12)
-			txt = txt.substring(0,11) + "\u2026"; // ellipsis "…" (in UTF-8)
+        if (name.startsWith(Constants.R_HEADS)) {
+            g.setBackground(Color.GREEN);
+            txt = Repository.shortenRefName(name);
+        } else if (name.startsWith(Constants.R_REMOTES)){
+            g.setBackground(Color.LIGHT_GRAY);
+            txt = Repository.shortenRefName(name);
+        } else if (name.startsWith(Constants.R_TAGS)){
+            g.setBackground(Color.YELLOW);
+            txt = Repository.shortenRefName(name);
+        } else {
+            // Whatever this would be
+            g.setBackground(Color.WHITE);
+            if (name.startsWith(Constants.R_REFS))
+                txt = name.substring(Constants.R_REFS.length());
+            else
+                txt = name; // HEAD and such
+        }
+        if (ref.getPeeledObjectId() != null) {
+            float[] colorComponents = g.getBackground().getRGBColorComponents(null);
+            colorComponents[0] *= 0.9;
+            colorComponents[1] *= 0.9;
+            colorComponents[2] *= 0.9;
+            g.setBackground(new Color(colorComponents[0],colorComponents[1],colorComponents[2]));
+        }
+        if (txt.length() > 12)
+            txt = txt.substring(0,11) + "\u2026"; // ellipsis "…" (in UTF-8)
 
-		final int texth = g.getFontMetrics().getHeight();
-		int textw = g.getFontMetrics().stringWidth(txt);
+        final int texth = g.getFontMetrics().getHeight();
+        int textw = g.getFontMetrics().stringWidth(txt);
+
 		g.setColor(g.getBackground());
 		int arcHeight = texth/4;
 		int y0 = y - texth/2 + (cell.getHeight() - texth)/2;
@@ -196,6 +197,31 @@ final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color>
 		g.drawRoundRect(x, y0, textw + arcHeight*2, texth -1 , arcHeight, arcHeight);
 		g.setColor(Color.BLACK);
 		g.drawString(txt, x + arcHeight, y0 + texth - g.getFontMetrics().getDescent());
+
+		return arcHeight * 3 + textw;
+	}
+
+    @Override
+	protected int drawCommit(int x, int y, RevCommit commit) {
+		String sha1;
+        if (decorate) {
+            sha1 = commit.getId().name();
+        } else {
+            sha1 = commit.getId().abbreviate(7).name();
+        }
+        g.setBackground(Color.YELLOW);
+
+        final int texth = g.getFontMetrics().getHeight();
+        int textw = g.getFontMetrics().stringWidth(sha1);
+
+		g.setColor(g.getBackground());
+		int arcHeight = texth/4;
+		int y0 = y - texth/2 + (cell.getHeight() - texth)/2;
+		g.fillRoundRect(x , y0, textw + arcHeight*2, texth -1, arcHeight, arcHeight);
+		g.setColor(g.getColor().darker());
+		g.drawRoundRect(x, y0, textw + arcHeight*2, texth -1 , arcHeight, arcHeight);
+		g.setColor(Color.BLACK);
+		g.drawString(sha1, x + arcHeight, y0 + texth - g.getFontMetrics().getDescent());
 
 		return arcHeight * 3 + textw;
 	}

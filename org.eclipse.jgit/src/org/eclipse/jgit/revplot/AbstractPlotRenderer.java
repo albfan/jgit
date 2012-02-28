@@ -44,6 +44,8 @@
 package org.eclipse.jgit.revplot;
 
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.revwalk.DepthWalk;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevFlag;
 
 /**
@@ -83,7 +85,13 @@ public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 
 	private static final int LEFT_PAD = 2;
 
-	/**
+    protected boolean decorate;
+
+    public void setDecorate(boolean decorate) {
+        this.decorate = decorate;
+    }
+
+    /**
 	 * Paint one commit using the underlying graphics library.
 	 *
 	 * @param commit
@@ -149,12 +157,20 @@ public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 
 		int textx = Math.max(maxCenter + LANE_WIDTH / 2, dotX + dotSize) + 8;
 		int n = commit.refs.length;
-		for (int i = 0; i < n; ++i) {
-			textx += drawLabel(textx + dotSize, h/2, commit.refs[i]);
-		}
+        int x;
+        if (decorate) {
+            for (int i = 0; i < n; ++i) {
+                textx += drawLabel(textx + dotSize, h/2, commit.refs[i]);
+            }
+            x = textx + dotSize + n * 2;
+        } else {
+            textx += drawCommit(textx + dotSize, h/2, commit);
+            x = textx + dotSize;
+        }
 
-		final String msg = commit.getShortMessage();
-		drawText(msg, textx + dotSize + n*2, h / 2);
+        //TODO: Cuando hay un merge pero este no se ve, el espacio inicial es mayor del que debiera
+
+        drawText(commit.getShortMessage(), x, h / 2);
 	}
 
 	/**
@@ -169,6 +185,8 @@ public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 	 * @return width of label in pixels
 	 */
 	protected abstract int drawLabel(int x, int y, Ref ref);
+
+	protected abstract int drawCommit(int x, int y, RevCommit commit);
 
 	private int computeDotSize(final int h) {
 		int d = (int) (Math.min(h, LANE_WIDTH) * 0.50f);

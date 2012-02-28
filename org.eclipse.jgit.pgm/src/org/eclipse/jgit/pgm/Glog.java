@@ -44,21 +44,17 @@
 
 package org.eclipse.jgit.pgm;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import javax.swing.*;
 
 import org.eclipse.jgit.awtui.CommitGraphPane;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revplot.PlotWalk;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
@@ -68,39 +64,120 @@ class Glog extends RevWalkTextBuiltin {
 	final JFrame frame;
 
 	final CommitGraphPane graphPane;
+    private final JComboBox comboBranches;
+    private ActionListener actionListener;
+    private JTextField textField;
+    private String[] args;
 
-	Glog() {
+    Glog() {
 		frame = new JFrame();
-		frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(final WindowEvent e) {
-				frame.dispose();
-			}
-		});
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 		graphPane = new CommitGraphPane();
 
-		final JScrollPane graphScroll = new JScrollPane(graphPane);
+		JScrollPane graphScroll = new JScrollPane(graphPane);
 
-		final JPanel buttons = new JPanel(new FlowLayout());
-		final JButton repaint = new JButton();
-		repaint.setText(CLIText.get().repaint);
-		repaint.addActionListener(new ActionListener() {
+		JPanel buttons = new JPanel(new FlowLayout());
+        JButton repaint = new JButton();
+        repaint.setText(CLIText.get().repaint);
+        repaint.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				graphPane.repaint();
 			}
 		});
 		buttons.add(repaint);
 
-		final JPanel world = new JPanel(new BorderLayout());
-		world.add(buttons, BorderLayout.SOUTH);
+        JPanel branches = new JPanel(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+
+        c.gridx = 0;
+        c.gridy = 0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.ipady = 5;
+        c.anchor = GridBagConstraints.FIRST_LINE_START;
+        branches.add(new JLabel("Git Branches:"), c);
+        c.gridy = 1;
+        comboBranches = new JComboBox();                        
+        branches.add(comboBranches, c);        
+        textField = new JTextField();
+        textField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    showCommits(new String[]{textField.getText()});
+                } catch (Exception e1) {
+                }
+            }
+        });
+        c.gridy = 2;
+        branches.add(new JLabel("Git Revisions:"), c);
+        c.gridy = 3;
+        c.anchor = GridBagConstraints.NORTH;
+        branches.add(textField, c);
+
+        JPanel world = new JPanel(new BorderLayout());
 		world.add(graphScroll, BorderLayout.CENTER);
+        JPanel pBranch = new JPanel(new BorderLayout());
+        pBranch.add(branches, BorderLayout.NORTH);
+        world.add(pBranch, BorderLayout.EAST);
+        world.add(buttons, BorderLayout.SOUTH);
 
 		frame.getContentPane().add(world);
 	}
 
-	@Override
+    @Override
+    protected void parseArguments(String[] args) {
+        this.args = args;
+        super.parseArguments(args);
+    }
+
+    @Override
+    protected void run() throws Exception {
+        String arg = null;
+        for (int i = 0; i < args.length; i++) {
+            arg = args[i];
+            if (!arg.startsWith("-")) {
+                break;
+            }
+        }
+        if (arg != null) {
+            textField.setText(arg);
+        }
+        comboBranches.removeActionListener(actionListener);
+        comboBranches.removeAllItems();
+        Map<String, Ref> refs = db.getAllRefs();
+        Ref head = refs.get(Constants.HEAD);
+        Iterator<String> it = refs.keySet().iterator();
+        while (it.hasNext()) {
+            String ref = it.next();
+            if (ref.startsWith(Constants.R_HEADS) || ref.startsWith(Constants.R_REMOTES)) {
+                comboBranches.addItem(ref);
+            }
+        }
+        comboBranches.addItem("(All)");
+        actionListener = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    String branch = (String) comboBranches.getItemAt(comboBranches.getSelectedIndex());
+                    showCommits(new String[]{branch});
+                } catch (Exception e1) {
+                }
+            }
+        };
+        comboBranches.addActionListener(actionListener);
+        super.run();
+    }
+
+    private void showCommits(String[] args) throws Exception {
+        commits.clear();
+        graphPane.getCommitList().clear();
+        parseArguments(args);
+        graphPane.invalidate();
+        Glog.super.run();
+    }
+
+    @Override
 	protected int walkLoop() throws Exception {
+        graphPane.setDecorate(decorate);
 		graphPane.getCommitList().source(walk);
 		graphPane.getCommitList().fillTo(Integer.MAX_VALUE);
 

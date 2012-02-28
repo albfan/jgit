@@ -85,6 +85,15 @@ abstract class RevWalkTextBuiltin extends TextBuiltin {
 	@Option(name = "--all")
 	boolean all = false;
 
+    @Option(name = "--oneline", usage = "usage_oneLine")
+    boolean showOneLine;
+
+    @Option(name = "--color", usage = "usage_color")
+    boolean color;
+
+    @Option(name="--decorate", usage="usage_showRefNamesMatchingCommits")
+    boolean decorate;
+
 	char[] outbuffer = new char[Constants.OBJECT_ID_LENGTH * 2];
 
 	private final EnumSet<RevSort> sorting = EnumSet.noneOf(RevSort.class);
@@ -122,7 +131,7 @@ abstract class RevWalkTextBuiltin extends TextBuiltin {
 	}
 
 	@Argument(index = 0, metaVar = "metaVar_commitish")
-	private final List<RevCommit> commits = new ArrayList<RevCommit>();
+	protected final List<RevCommit> commits = new ArrayList<RevCommit>();
 
 	@Option(name = "--", metaVar = "metaVar_path", multiValued = true, handler = PathTreeFilterHandler.class)
 	protected TreeFilter pathFilter = TreeFilter.ALL;
@@ -161,7 +170,7 @@ abstract class RevWalkTextBuiltin extends TextBuiltin {
 		else if (revLimiter.size() > 1)
 			walk.setRevFilter(AndRevFilter.create(revLimiter));
 
-		if (all)
+		if (all) {
 			for (Ref a : db.getAllRefs().values()) {
 				ObjectId oid = a.getPeeledObjectId();
 				if (oid == null)
@@ -172,6 +181,7 @@ abstract class RevWalkTextBuiltin extends TextBuiltin {
 					// Ignore all refs which are not commits
 				}
 			}
+        }
 
 		if (commits.isEmpty()) {
 			final ObjectId head = db.resolve(Constants.HEAD);

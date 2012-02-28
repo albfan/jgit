@@ -48,11 +48,10 @@ import static org.eclipse.jgit.lib.Constants.R_HEADS;
 import static org.eclipse.jgit.lib.Constants.R_REMOTES;
 import static org.eclipse.jgit.lib.Constants.R_TAGS;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.text.MessageFormat;
+import java.util.Iterator;
+import java.util.Properties;
 import java.util.ResourceBundle;
 
 import org.eclipse.jgit.lib.ObjectId;
