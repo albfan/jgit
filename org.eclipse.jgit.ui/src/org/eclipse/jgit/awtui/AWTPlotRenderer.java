@@ -113,9 +113,9 @@ final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color> imple
 
 		g.setColor(color);
 		g.setStroke(CommitGraphPane.strokeCache[1]);
-		g.fillOval(x, y, w, h);
+		g.fillOval(x+1, y, w, h);
 		g.setColor(color);
-		g.drawOval(x, y, w, h);
+		g.drawOval(x+1, y, w, h);
 	}
 
 	@Override

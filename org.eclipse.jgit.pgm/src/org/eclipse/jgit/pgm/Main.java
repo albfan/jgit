@@ -75,7 +75,10 @@ public class Main {
 	@Option(name = "--show-stack-trace", usage = "usage_displayThejavaStackTraceOnExceptions")
 	private boolean showStackTrace;
 
-	@Option(name = "--git-dir", metaVar = "metaVar_gitDir", usage = "usage_setTheGitRepositoryToOperateOn")
+    @Option(name = "--decorate", usage = "usage_displayDecorate")
+    private boolean decorate;
+
+    @Option(name = "--git-dir", metaVar = "metaVar_gitDir", usage = "usage_setTheGitRepositoryToOperateOn")
 	private String gitdir;
 
 	@Argument(index = 0, metaVar = "metaVar_command", required = true, handler = SubcommandHandler.class)
