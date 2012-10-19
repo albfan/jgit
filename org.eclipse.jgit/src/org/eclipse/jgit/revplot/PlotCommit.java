@@ -55,19 +55,43 @@ import org.eclipse.jgit.lib.Ref;
  * @see PlotCommitList
  */
 public class PlotCommit<L extends PlotLane> extends RevCommit {
-	static final PlotCommit[] NO_CHILDREN = {};
+	private static final PlotCommit[] NO_CHILDREN = {};
 
-	static final PlotLane[] NO_LANES = {};
+	private static final PlotLane[] NO_LANES = {};
 
-	static final Ref[] NO_REFS = {};
+	public static final Ref[] NO_REFS = {};
 
-	PlotLane[] passingLanes;
+    public PlotLane[] getPassingLanes() {
+        return passingLanes;
+    }
 
-	PlotLane lane;
+    public void setPassingLanes(PlotLane[] passingLanes) {
+        this.passingLanes = passingLanes;
+    }
 
-	PlotCommit[] children;
+    public PlotCommit[] getChildren() {
+        return children;
+    }
 
-	Ref[] refs;
+    public void setChildren(PlotCommit[] children) {
+        this.children = children;
+    }
+
+    public Ref[] getRefs() {
+        return refs;
+    }
+
+    public void setRefs(Ref[] refs) {
+        this.refs = refs;
+    }
+
+    private PlotLane[] passingLanes;
+
+	private PlotLane lane;
+
+	private PlotCommit[] children;
+
+	private Ref[] refs;
 
 	/**
 	 * Create a new commit.
@@ -178,6 +202,10 @@ public class PlotCommit<L extends PlotLane> extends RevCommit {
 	public final L getLane() {
 		return (L) lane;
 	}
+
+    public void setLane(PlotLane lane) {
+        this.lane = lane;
+    }
 
 	@Override
 	public void reset() {

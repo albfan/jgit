@@ -131,7 +131,7 @@ public class PlotWalk extends RevWalk {
 			IncorrectObjectTypeException, IOException {
 		PlotCommit<?> pc = (PlotCommit) super.next();
 		if (pc != null)
-			pc.refs = getRefs(pc);
+			pc.setRefs(getRefs(pc));
 		return pc;
 	}
 

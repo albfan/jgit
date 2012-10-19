@@ -153,6 +153,18 @@ abstract class RevWalkTextBuiltin extends TextBuiltin {
 		revLimiter.add(MessageRevFilter.create(msg));
 	}
 
+    public void clearParams() {
+        objects = false;
+        parents = false;
+        count = false;
+        all = false;
+        showOneLine = false;
+        color = false;
+        decorate = false;
+        sorting.clear();
+        revLimiter.clear();
+    }
+
 	@Override
 	protected void run() throws Exception {
 		walk = createWalk();
@@ -203,10 +215,7 @@ abstract class RevWalkTextBuiltin extends TextBuiltin {
 			final long end = System.currentTimeMillis();
 			System.err.print(n);
 			System.err.print(' ');
-			System.err
-					.println(MessageFormat.format(
-							CLIText.get().timeInMilliSeconds,
-							Long.valueOf(end - start)));
+			System.err.println(MessageFormat.format(CLIText.get().timeInMilliSeconds, Long.valueOf(end - start)));
 		}
 	}
 

@@ -66,8 +66,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
  * @param <L>
  *            type of lane used by the application.
  */
-public class PlotCommitList<L extends PlotLane> extends
-		RevCommitList<PlotCommit<L>> {
+public class PlotCommitList<L extends PlotLane> extends RevCommitList<PlotCommit<L>> {
 	static final int MAX_LENGTH = 25;
 
 	private int positionsAllocated;
@@ -110,7 +109,7 @@ public class PlotCommitList<L extends PlotLane> extends
 	 */
 	public void findPassingThrough(final PlotCommit<L> currCommit,
 			final Collection<L> result) {
-		for (final PlotLane p : currCommit.passingLanes)
+		for (final PlotLane p : currCommit.getPassingLanes())
 			result.add((L) p);
 	}
 
@@ -122,25 +121,25 @@ public class PlotCommitList<L extends PlotLane> extends
 		if (nChildren == 0)
 			return;
 
-		if (nChildren == 1 && currCommit.children[0].getParentCount() < 2) {
+		if (nChildren == 1 && currCommit.getChild(0).getParentCount() < 2) {
 			// Only one child, child has only us as their parent.
 			// Stay in the same lane as the child.
 			//
-			final PlotCommit c = currCommit.children[0];
-			if (c.lane == null) {
+			final PlotCommit c = currCommit.getChild(0);
+			if (c.getLane() == null) {
 				// Hmmph. This child must be the first along this lane.
 				//
-				c.lane = nextFreeLane();
-				activeLanes.add(c.lane);
+				c.setLane(nextFreeLane());
+				activeLanes.add(c.getLane());
 			}
 			for (int r = index - 1; r >= 0; r--) {
 				final PlotCommit rObj = get(r);
 				if (rObj == c)
 					break;
-				rObj.addPassingLane(c.lane);
+				rObj.addPassingLane(c.getLane());
 			}
 
-			currCommit.lane = c.lane;
+			currCommit.setLane(c.getLane());
 			handleBlockedLanes(index, currCommit, nChildren);
 		} else {
 			// More than one child, or our child is a merge.
@@ -166,20 +165,20 @@ public class PlotCommitList<L extends PlotLane> extends
 			PlotLane reservedLane = null;
 
 			for (int i = 0; i < nChildren; i++) {
-				final PlotCommit c = currCommit.children[i];
+				final PlotCommit c = currCommit.getChild(i);
 				// don't forget to position all of your children if they are
 				// not already positioned.
-				if (c.lane == null) {
-					c.lane = nextFreeLane();
-					activeLanes.add(c.lane);
+				if (c.getLane() == null) {
+					c.setLane(nextFreeLane());
+					activeLanes.add(c.getLane());
 					if (reservedLane != null)
-						closeLane(c.lane);
+						closeLane(c.getLane());
 					else
-						reservedLane = c.lane;
-				} else if (reservedLane == null && activeLanes.contains(c.lane))
-					reservedLane = c.lane;
+						reservedLane = c.getLane();
+				} else if (reservedLane == null && activeLanes.contains(c.getLane()))
+					reservedLane = c.getLane();
 				else
-					closeLane(c.lane);
+					closeLane(c.getLane());
 			}
 
 			// finally all children are processed. We can close the lane on that
@@ -187,8 +186,8 @@ public class PlotCommitList<L extends PlotLane> extends
 			if (reservedLane != null)
 				closeLane(reservedLane);
 
-			currCommit.lane = nextFreeLane();
-			activeLanes.add(currCommit.lane);
+			currCommit.setLane(nextFreeLane());
+			activeLanes.add(currCommit.getLane());
 
 			handleBlockedLanes(index, currCommit, nChildren);
 		}
@@ -218,11 +217,11 @@ public class PlotCommitList<L extends PlotLane> extends
 				PlotLane lane = rObj.getLane();
 				if (lane != null)
 					blockedPositions.set(lane.getPosition());
-				rObj.addPassingLane(commit.lane);
+				rObj.addPassingLane(commit.getLane());
 			}
 		}
 		// Now let's check whether we have to reposition the lane
-		if (blockedPositions.get(commit.lane.getPosition())) {
+		if (blockedPositions.get(commit.getLane().getPosition())) {
 			int newPos = -1;
 			for (Integer pos : freePositions)
 				if (!blockedPositions.get(pos)) {
@@ -231,10 +230,10 @@ public class PlotCommitList<L extends PlotLane> extends
 				}
 			if (newPos == -1)
 				newPos = positionsAllocated++;
-			freePositions.add(commit.lane.getPosition());
-			activeLanes.remove(commit.lane);
-			commit.lane.position = newPos;
-			activeLanes.add(commit.lane);
+			freePositions.add(commit.getLane().getPosition());
+			activeLanes.remove(commit.getLane());
+			commit.getLane().setPosition(newPos);
+			activeLanes.add(commit.getLane());
 		}
 	}
 
@@ -254,10 +253,10 @@ public class PlotCommitList<L extends PlotLane> extends
 	private PlotLane nextFreeLane() {
 		final PlotLane p = createLane();
 		if (freePositions.isEmpty()) {
-			p.position = positionsAllocated++;
+			p.setPosition(positionsAllocated++);
 		} else {
 			final Integer min = freePositions.first();
-			p.position = min.intValue();
+			p.setPosition(min);
 			freePositions.remove(min);
 		}
 		return p;

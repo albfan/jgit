@@ -43,16 +43,14 @@
 
 package org.eclipse.jgit.awtui;
 
-import org.eclipse.jgit.awtui.SwingCommitList.SwingLane;
-import org.eclipse.jgit.lib.PersonIdent;
-import org.eclipse.jgit.revplot.PlotCommit;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.revplot.PlotCommitList;
+import org.eclipse.jgit.revwalk.RevWalk;
 
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.io.IOException;
 
 /**
  * Draws a commit graph in a JTable.
@@ -68,14 +66,16 @@ import java.text.SimpleDateFormat;
 public class CommitGraphPane extends JTable {
 	private static final long serialVersionUID = 1L;
 
-	private final SwingCommitList allCommits;
-    private boolean decorate;
+    static final Stroke[] strokeCache;
 
+    static {
+        strokeCache = new Stroke[4];
+        for (int i = 1; i < strokeCache.length; i++)
+            strokeCache[i] = new BasicStroke(i);
+    }
 
-    /** Create a new empty panel. */
 	public CommitGraphPane() {
-        allCommits = new SwingCommitList();
-		configureHeader();
+		configureHeader(false);
 		setShowHorizontalLines(false);
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         setRowMargin(0);
@@ -83,8 +83,7 @@ public class CommitGraphPane extends JTable {
 	}
 
     public void setDecorate(boolean decorate) {
-        this.decorate = decorate;
-        configureHeader();
+        configureHeader(decorate);
     }
 
     private void configureRowHeight() {
@@ -95,15 +94,6 @@ public class CommitGraphPane extends JTable {
 			h = Math.max(h, c.getPreferredSize().height);
 		}
 		setRowHeight(h +getRowMargin());
-	}
-
-	/**
-	 * Get the commit list this pane renders from.
-	 *
-	 * @return the list the caller must populate.
-	 */
-	public PlotCommitList getCommitList() {
-		return allCommits;
 	}
 
 	@Override
@@ -118,143 +108,34 @@ public class CommitGraphPane extends JTable {
 		return new CommitTableModel();
 	}
 
-	private void configureHeader() {
+	private void configureHeader(boolean decorate) {
 		final JTableHeader th = getTableHeader();
 		final TableColumnModel cols = th.getColumnModel();
 
 		final TableColumn graph = cols.getColumn(0);
-		final TableColumn author = cols.getColumn(1);
-		final TableColumn date = cols.getColumn(2);
+        graph.setHeaderValue("");
+        graph.setCellRenderer(new GraphCellRender(decorate));
 
-		graph.setHeaderValue("");
-		author.setHeaderValue(UIText.get().author);
-		date.setHeaderValue(UIText.get().date);
+        final TableColumn author = cols.getColumn(1);
+        author.setHeaderValue(UIText.get().author);
+        author.setCellRenderer(new NameCellRender());
 
-        GraphCellRender cellRenderer = new GraphCellRender();
-        cellRenderer.getRenderer().setDecorate(decorate);
-        graph.setCellRenderer(cellRenderer);
-		author.setCellRenderer(new NameCellRender());
-		date.setCellRenderer(new DateCellRender());
+        final TableColumn date = cols.getColumn(2);
+        date.setHeaderValue(UIText.get().date);
+        date.setCellRenderer(new DateCellRender());
 	}
 
-	class CommitTableModel extends AbstractTableModel {
-		private static final long serialVersionUID = 1L;
-
-		PlotCommit<SwingLane> lastCommit;
-
-		PersonIdent lastAuthor;
-
-		public int getColumnCount() {
-			return 3;
-		}
-
-		public int getRowCount() {
-			return allCommits != null ? allCommits.size() : 0;
-		}
-
-		public Object getValueAt(final int rowIndex, final int columnIndex) {
-			final PlotCommit<SwingLane> c = allCommits.get(rowIndex);
-			switch (columnIndex) {
-			case 0:
-				return c;
-			case 1:
-				return authorFor(c);
-			case 2:
-				return authorFor(c);
-			default:
-				return null;
-			}
-		}
-
-		PersonIdent authorFor(final PlotCommit<SwingLane> c) {
-			if (c != lastCommit) {
-				lastCommit = c;
-				lastAuthor = c.getAuthorIdent();
-			}
-			return lastAuthor;
-		}
-	}
-
-	static class NameCellRender extends DefaultTableCellRenderer {
-		private static final long serialVersionUID = 1L;
-
-		public Component getTableCellRendererComponent(final JTable table,
-				final Object value, final boolean isSelected,
-				final boolean hasFocus, final int row, final int column) {
-			final PersonIdent pi = (PersonIdent) value;
-
-			final String valueStr;
-			if (pi != null)
-				valueStr = pi.getName() + " <" + pi.getEmailAddress() + ">";
-			else
-				valueStr = "";
-			return super.getTableCellRendererComponent(table, valueStr,
-					isSelected, hasFocus, row, column);
-		}
-	}
-
-	static class DateCellRender extends DefaultTableCellRenderer {
-		private static final long serialVersionUID = 1L;
-
-		private final DateFormat fmt = new SimpleDateFormat(
-				"yyyy-MM-dd HH:mm:ss");
-
-		public Component getTableCellRendererComponent(final JTable table,
-				final Object value, final boolean isSelected,
-				final boolean hasFocus, final int row, final int column) {
-			final PersonIdent pi = (PersonIdent) value;
-
-			final String valueStr;
-			if (pi != null)
-				valueStr = fmt.format(pi.getWhen());
-			else
-				valueStr = "";
-			return super.getTableCellRendererComponent(table, valueStr,
-					isSelected, hasFocus, row, column);
-		}
-	}
-
-	static class GraphCellRender extends DefaultTableCellRenderer {
-		private static final long serialVersionUID = 1L;
-
-		private final AWTPlotRenderer renderer = new AWTPlotRenderer(this);
-
-		PlotCommit<SwingLane> commit;
-
-		@SuppressWarnings("unchecked")
-		public Component getTableCellRendererComponent(final JTable table,
-				final Object value, final boolean isSelected,
-				final boolean hasFocus, final int row, final int column) {
-			super.getTableCellRendererComponent(table, value, isSelected,
-					hasFocus, row, column);
-			commit = (PlotCommit<SwingLane>) value;
-			return this;
-		}
-
-        public AWTPlotRenderer getRenderer() {
-            return renderer;
-        }
-
-        @Override
-		protected void paintComponent(final Graphics inputGraphics) {
-			if (inputGraphics == null)
-				return;
-			renderer.paint(inputGraphics, commit);
-		}
-	}
-
-	static final Stroke[] strokeCache;
-
-	static {
-		strokeCache = new Stroke[4];
-		for (int i = 1; i < strokeCache.length; i++)
-			strokeCache[i] = new BasicStroke(i);
-	}
-
-	static Stroke stroke(final int width) {
+    static Stroke stroke(final int width) {
 		if (width < strokeCache.length)
 			return strokeCache[width];
 		return new BasicStroke(width);
 	}
 
+    public void fill(RevWalk walk, int maxValue) throws IOException {
+        ((CommitTableModel)getModel()).fill(walk, maxValue);
+    }
+
+    public void clear() {
+        ((CommitTableModel)getModel()).getCommits().clear();
+    }
 }

@@ -73,16 +73,12 @@ import org.eclipse.jgit.revwalk.RevFlag;
  * the implementation must perform the cell offset computations within the
  * various draw methods.
  *
- * @param <TLane>
- *            type of lane being used by the application.
- * @param <TColor>
- *            type of color object used by the graphics library.
+ * @param <TLane> type of lane being used by the application.
+ * @param <TColor> type of color object used by the graphics library.
  */
 public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 	private static final int LANE_WIDTH = 14;
-
 	private static final int LINE_WIDTH = 2;
-
 	private static final int LEFT_PAD = 2;
 
     protected boolean decorate;
@@ -106,7 +102,7 @@ public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 		final TColor myColor = laneColor(myLane);
 
 		int maxCenter = 0;
-		for (final TLane passingLane : (TLane[]) commit.passingLanes) {
+		for (final TLane passingLane : (TLane[]) commit.getPassingLanes()) {
 			final int cx = laneC(passingLane);
 			final TColor c = laneColor(passingLane);
 			drawLine(c, cx, 0, cx, h, LINE_WIDTH);
@@ -114,7 +110,8 @@ public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 		}
 
 		final int nParent = commit.getParentCount();
-		for (int i = 0; i < nParent; i++) {
+        int y = h / 2 - 1;
+        for (int i = 0; i < nParent; i++) {
 			final PlotCommit<TLane> p;
 			final TLane pLane;
 			final TColor pColor;
@@ -131,15 +128,15 @@ public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 			if (Math.abs(myLaneX - cx) > LANE_WIDTH) {
 				if (myLaneX < cx) {
 					final int ix = cx - LANE_WIDTH / 2;
-					drawLine(pColor, myLaneX, h / 2, ix, h / 2, LINE_WIDTH);
-					drawLine(pColor, ix, h / 2, cx, h, LINE_WIDTH);
+					drawLine(pColor, myLaneX, y, ix, y, LINE_WIDTH);
+					drawLine(pColor, ix, y, cx, h, LINE_WIDTH);
 				} else {
 					final int ix = cx + LANE_WIDTH / 2;
-					drawLine(pColor, myLaneX, h / 2, ix, h / 2, LINE_WIDTH);
-					drawLine(pColor, ix, h / 2, cx, h, LINE_WIDTH);
+					drawLine(pColor, myLaneX, y, ix, y, LINE_WIDTH);
+					drawLine(pColor, ix, y, cx, h, LINE_WIDTH);
 				}
 			} else {
-				drawLine(pColor, myLaneX, h / 2, cx, h, LINE_WIDTH);
+				drawLine(pColor, myLaneX, y, cx, h, LINE_WIDTH);
 			}
 			maxCenter = Math.max(maxCenter, cx);
 		}
@@ -156,131 +153,26 @@ public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 			drawCommitDot(laneColor(commit.getLane()), dotX, dotY, dotSize, dotSize);
 
 		int textx = Math.max(maxCenter + LANE_WIDTH / 2, dotX + dotSize) + 8;
-		int n = commit.refs.length;
+		int n = commit.getRefs().length;
         int x;
         if (decorate) {
             for (int i = 0; i < n; ++i) {
-                textx += drawLabel(textx + dotSize, h/2, commit.refs[i]);
+                textx += drawLabel(textx + dotSize, y, commit.getRef(i));
             }
-            x = textx + dotSize + n * 2;
-        } else {
-            textx += drawCommit(textx + dotSize, h/2, commit);
-            x = textx + dotSize;
         }
+        textx += drawCommit(textx + dotSize, y, commit);
+        x = textx + dotSize;
 
         //TODO: Cuando hay un merge pero este no se ve, el espacio inicial es mayor del que debiera
 
-        drawText(commit.getShortMessage(), x, h / 2);
+        drawText(commit.getShortMessage(), x, y);
 	}
-
-	/**
-	 * Draw a decoration for the Ref ref at x,y
-	 *
-	 * @param x
-	 *            left
-	 * @param y
-	 *            top
-	 * @param ref
-	 *            A peeled ref
-	 * @return width of label in pixels
-	 */
-	protected abstract int drawLabel(int x, int y, Ref ref);
-
-	protected abstract int drawCommit(int x, int y, RevCommit commit);
 
 	private int computeDotSize(final int h) {
 		int d = (int) (Math.min(h, LANE_WIDTH) * 0.50f);
 		d += (d & 1);
 		return d;
 	}
-
-	/**
-	 * Obtain the color reference used to paint this lane.
-	 * <p>
-	 * Colors returned by this method will be passed to the other drawing
-	 * primitives, so the color returned should be application specific.
-	 * <p>
-	 * If a null lane is supplied the return value must still be acceptable to a
-	 * drawing method. Usually this means the implementation should return a
-	 * default color.
-	 *
-	 * @param myLane
-	 *            the current lane. May be null.
-	 * @return graphics specific color reference. Must be a valid color.
-	 */
-	protected abstract TColor laneColor(TLane myLane);
-
-	/**
-	 * Draw a single line within this cell.
-	 *
-	 * @param color
-	 *            the color to use while drawing the line.
-	 * @param x1
-	 *            starting X coordinate, 0 based.
-	 * @param y1
-	 *            starting Y coordinate, 0 based.
-	 * @param x2
-	 *            ending X coordinate, 0 based.
-	 * @param y2
-	 *            ending Y coordinate, 0 based.
-	 * @param width
-	 *            number of pixels wide for the line. Always at least 1.
-	 */
-	protected abstract void drawLine(TColor color, int x1, int y1, int x2,
-			int y2, int width);
-
-	/**
-	 * Draw a single commit dot.
-	 * <p>
-	 * Usually the commit dot is a filled oval in blue, then a drawn oval in
-	 * black, using the same coordinates for both operations.
-	 *
-     * @param color
-     *            color for dot
-     * @param x
-     *            upper left of the oval's bounding box.
-     * @param y
-*            upper left of the oval's bounding box.
-     * @param w
-*            width of the oval's bounding box.
-     * @param h
-	 *            height of the oval's bounding box.
-     */
-	protected abstract void drawCommitDot(TColor color, int x, int y, int w, int h);
-
-	/**
-	 * Draw a single boundary commit (aka uninteresting commit) dot.
-	 * <p>
-	 * Usually a boundary commit dot is a light gray oval with a white center.
-	 *
-	 * @param x
-	 *            upper left of the oval's bounding box.
-	 * @param y
-	 *            upper left of the oval's bounding box.
-	 * @param w
-	 *            width of the oval's bounding box.
-	 * @param h
-	 *            height of the oval's bounding box.
-	 */
-	protected abstract void drawBoundaryDot(int x, int y, int w, int h);
-
-	/**
-	 * Draw a single line of text.
-	 * <p>
-	 * The font and colors used to render the text are left up to the
-	 * implementation.
-	 *
-	 * @param msg
-	 *            the text to draw. Does not contain LFs.
-	 * @param x
-	 *            first pixel from the left that the text can be drawn at.
-	 *            Character data must not appear before this position.
-	 * @param y
-	 *            pixel coordinate of the centerline of the text.
-	 *            Implementations must adjust this coordinate to account for the
-	 *            way their implementation handles font rendering.
-	 */
-	protected abstract void drawText(String msg, int x, int y);
 
 	private int laneX(final PlotLane myLane) {
 		final int p = myLane != null ? myLane.getPosition() : 0;
@@ -290,4 +182,85 @@ public abstract class AbstractPlotRenderer<TLane extends PlotLane, TColor> {
 	private int laneC(final PlotLane myLane) {
 		return laneX(myLane) + LANE_WIDTH / 2;
 	}
+
+    /**
+     * Draw a decoration for the Ref ref at x,y
+     *
+     * @param x left
+     * @param y top
+     * @param ref A peeled ref
+     * @return width of label in pixels
+     */
+    protected abstract int drawLabel(int x, int y, Ref ref);
+
+    protected abstract int drawCommit(int x, int y, RevCommit commit);
+
+    /**
+     * Obtain the color reference used to paint this lane.
+     * <p>
+     * Colors returned by this method will be passed to the other drawing
+     * primitives, so the color returned should be application specific.
+     * <p>
+     * If a null lane is supplied the return value must still be acceptable to a
+     * drawing method. Usually this means the implementation should return a
+     * default color.
+     *
+     * @param myLane the current lane. May be null.
+     * @return graphics specific color reference. Must be a valid color.
+     */
+    protected abstract TColor laneColor(TLane myLane);
+
+    /**
+     * Draw a single line within this cell.
+     *
+     * @param color the color to use while drawing the line.
+     * @param x1 starting X coordinate, 0 based.
+     * @param y1 starting Y coordinate, 0 based.
+     * @param x2 ending X coordinate, 0 based.
+     * @param y2 ending Y coordinate, 0 based.
+     * @param width number of pixels wide for the line. Always at least 1.
+     */
+    protected abstract void drawLine(TColor color, int x1, int y1, int x2,
+                                     int y2, int width);
+
+    /**
+     * Draw a single commit dot.
+     * <p>
+     * Usually the commit dot is a filled oval in blue, then a drawn oval in
+     * black, using the same coordinates for both operations.
+     *
+     * @param color color for dot
+     * @param x upper left of the oval's bounding box.
+     * @param y upper left of the oval's bounding box.
+     * @param w width of the oval's bounding box.
+     * @param h height of the oval's bounding box.
+     */
+    protected abstract void drawCommitDot(TColor color, int x, int y, int w, int h);
+
+    /**
+     * Draw a single boundary commit (aka uninteresting commit) dot.
+     * <p>
+     * Usually a boundary commit dot is a light gray oval with a white center.
+     *
+     * @param x upper left of the oval's bounding box.
+     * @param y upper left of the oval's bounding box.
+     * @param w width of the oval's bounding box.
+     * @param h height of the oval's bounding box.
+     */
+    protected abstract void drawBoundaryDot(int x, int y, int w, int h);
+
+    /**
+     * Draw a single line of text.
+     * <p>
+     * The font and colors used to render the text are left up to the
+     * implementation.
+     *
+     * @param msg the text to draw. Does not contain LFs.
+     * @param x first pixel from the left that the text can be drawn at.
+     *            Character data must not appear before this position.
+     * @param y pixel coordinate of the centerline of the text.
+     *            Implementations must adjust this coordinate to account for the
+     *            way their implementation handles font rendering.
+     */
+    protected abstract void drawText(String msg, int x, int y);
 }

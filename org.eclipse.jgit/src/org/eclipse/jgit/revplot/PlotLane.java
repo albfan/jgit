@@ -53,7 +53,7 @@ import java.io.Serializable;
 public class PlotLane implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	int position;
+	private int position;
 
 	/**
 	 * Logical location of this lane within the graphing plane.
@@ -71,4 +71,8 @@ public class PlotLane implements Serializable {
 	public boolean equals(final Object o) {
 		return o == this;
 	}
+
+    public void setPosition(int position) {
+        this.position = position;
+    }
 }

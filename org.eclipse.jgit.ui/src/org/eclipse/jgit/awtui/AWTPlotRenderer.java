@@ -51,8 +51,6 @@ import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.io.Serializable;
 
-import org.eclipse.jgit.awtui.CommitGraphPane.GraphCellRender;
-import org.eclipse.jgit.awtui.SwingCommitList.SwingLane;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
@@ -92,8 +90,7 @@ final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color> imple
 	}
 
 	@Override
-	protected void drawLine(final Color color, int x1, int y1, int x2,
-			int y2, int width) {
+	protected void drawLine(Color color, int x1, int y1, int x2, int y2, int width) {
 		if (y1 == y2) {
 			x1 -= width / 2;
 			x2 -= width / 2;
@@ -108,10 +105,8 @@ final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color> imple
 	}
 
 	@Override
-	protected void drawCommitDot(Color color, final int x, final int y, final int w,
-                                 final int h) {
-
-		g.setColor(color);
+	protected void drawCommitDot(Color color, final int x, final int y, final int w, final int h) {
+        g.setColor(color);
 		g.setStroke(CommitGraphPane.strokeCache[1]);
 		g.fillOval(x+1, y, w, h);
 		g.setColor(color);
@@ -119,8 +114,7 @@ final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color> imple
 	}
 
 	@Override
-	protected void drawBoundaryDot(final int x, final int y, final int w,
-			final int h) {
+	protected void drawBoundaryDot(final int x, final int y, final int w, final int h) {
 		g.setColor(cell.getBackground());
 		g.setStroke(CommitGraphPane.strokeCache[1]);
 		g.fillOval(x, y, w, h);
@@ -138,7 +132,7 @@ final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color> imple
 
 	@Override
 	protected Color laneColor(final SwingLane myLane) {
-		return myLane != null ? myLane.color : Color.black;
+		return myLane != null ? myLane.getColor() : Color.black;
 	}
 
 	void paintTriangleDown(final int cx, final int y, final int h) {
@@ -204,11 +198,7 @@ final class AWTPlotRenderer extends AbstractPlotRenderer<SwingLane, Color> imple
     @Override
 	protected int drawCommit(int x, int y, RevCommit commit) {
 		String sha1;
-        if (decorate) {
-            sha1 = commit.getId().name();
-        } else {
-            sha1 = commit.getId().abbreviate(7).name();
-        }
+        sha1 = commit.getId().abbreviate(7).name();
         g.setBackground(Color.YELLOW);
 
         final int texth = g.getFontMetrics().getHeight();

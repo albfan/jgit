@@ -47,12 +47,8 @@ import java.awt.Color;
 import java.util.LinkedList;
 
 import org.eclipse.jgit.revplot.PlotCommitList;
-import org.eclipse.jgit.revplot.PlotLane;
 
-import java.awt.*;
-import java.util.LinkedList;
-
-class SwingCommitList extends PlotCommitList<SwingCommitList.SwingLane> {
+class SwingCommitList extends PlotCommitList<SwingLane> {
     final LinkedList<Color> colors;
 
     SwingCommitList() {
@@ -69,6 +65,8 @@ class SwingCommitList extends PlotCommitList<SwingCommitList.SwingLane> {
         colors.add(new Color(128, 64, 0));
         colors.add(new Color(255, 0, 255));
         colors.add(new Color(128, 0, 255));
+        colors.add(new Color(130, 255, 130));
+        colors.add(new Color(255,255, 64));
     }
 
     @Override
@@ -76,26 +74,12 @@ class SwingCommitList extends PlotCommitList<SwingCommitList.SwingLane> {
         final SwingLane lane = new SwingLane();
         if (colors.isEmpty())
             repackColors();
-        lane.color = colors.removeFirst();
+        lane.setColor(colors.removeFirst());
         return lane;
     }
 
     @Override
     protected void recycleLane(final SwingLane lane) {
-        colors.add(lane.color);
+        colors.add(lane.getColor());
     }
-
-    static class SwingLane extends PlotLane {
-        Color color;
-
-		@Override
-		public boolean equals(Object o) {
-			return super.equals(o) && color.equals(((SwingLane)o).color);
-		}
-
-		@Override
-		public int hashCode() {
-			return super.hashCode() ^ color.hashCode();
-		}
-	}
 }
